@@ -1,0 +1,108 @@
+body {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    flex: 1;
+    padding: 10px;
+    box-sizing: border-box;
+    min-height: 100vh;
+    font-family: system-ui, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    gap: 10px;
+    margin: 0;
+    background: #f3f3f3;
+}
+
+.title-container {
+    font-size: 35px;
+    font-weight: 700;
+}
+.header-container {
+    padding: 40px 10px;
+}
+
+.header-container,
+.buttons-container {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: stretch;
+}
+
+.result-container {
+    display: flex;
+    flex: 3;
+}
+
+.result-container input {
+    display: flex;
+    flex: 1;
+    font-size: 100px;
+    font-weight: 600;
+    min-width: 0;
+    border: none;
+    text-align: right;
+    background: inherit;
+    padding: 0 10px;
+}
+
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type=number] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+.buttons-container {
+    display: flex;
+    flex: 2;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.btn {
+    display: flex;
+    justify-content: space-between;
+    align-self: stretch;
+    align-items: stretch;
+    flex: 1 0 21%;
+    min-width: 70px;
+    min-height: 80px;
+    border-radius: 5px;
+    border: 0.01px solid rgba(187, 187, 187, 0.2);
+    box-shadow: 0px 0.5px 4px rgb(187, 187, 187, 0.7);
+    background: #f9f9f9;
+    justify-content: center;
+    align-items: center;
+    font-size: 38px;
+    font-weight: 10;
+    color: #1b1b1b;
+}
+
+.btn.equal {
+    background: #0067c0;
+    color: #f9f9f9;
+}
+
+.one,
+.two,
+.three,
+.four,
+.five,
+.six,
+.seven,
+.eight,
+.nine,
+.zero,
+.dot,
+.sign {
+    background: white;
+    color: black;
+}
+
+p {
+    margin: 0;
+}
