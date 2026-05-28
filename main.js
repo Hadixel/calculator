@@ -3,9 +3,9 @@ const buttons = {
     'ce': 'CE',
     'c': 'C',
     'del': 'DEL',
-    'dividByOne': '1/x',
-    'power': 'x\u00B2',
-    'squreRoot': '\u221Ax',
+    'divideByOne': '1/x',
+    'power': 'x\u00B2', // x²
+    'squareRoot': '\u221Ax', // √x
     'divider': '÷',
     'nine': '9',
     'eight': '8',
@@ -22,8 +22,78 @@ const buttons = {
     'sign': '+/-',
     'zero': '0',
     'dot': '.',
-    'equal': '='
+    'equal': '=',
+    
+    // Scientific Buttons
+    'sin': 'sin',
+    'cos': 'cos',
+    'tan': 'tan',
+    'asin': 'sin\u207B\u00B9',     // sin⁻¹
+    'acos': 'cos\u207B\u00B9',     // cos⁻¹
+    'atan': 'tan\u207B\u00B9',     // tan⁻¹
+    
+    'ln': 'ln',                   // لگاریتم طبیعی
+    'log': 'log',                 // لگاریتم مبنای ۱۰
+    'powerY': 'x\u02B8',          // xʸ
+    'ePowerX': 'e\u02E3',         // eˣ
+    'tenPowerX': '10\u02E3',      // 10ˣ
+    'customRoot': '\u02B8\u221Ax', // ʸ√x
+    
+    'pi': '\u03C0',               // پی
+    'e': 'e',                     // عدد نپر
+    
+    'openParenthesis': '(',
+    'closeParenthesis': ')',
+    
+    'factorial': 'n!',            // فاکتوریل
+    'mod': 'Mod',                 // باقی‌مانده تقسیم
+    'exp': 'Exp',                 // نماد علمی
+    
+    // Memory Buttons
+    'mc': 'MC',                   // پاک کردن حافظه
+    'mr': 'MR',                   // فراخوانی از حافظه
+    'mPlus': 'M+',                // افزودن به حافظه
+    'mMinus': 'M-',               // کاستن از حافظه
+    'ms': 'MS',                   // ذخیره در حافظه
+    
+    // Control & Modes
+    'ans': 'Ans',                 // آخرین پاسخ محاسباتی
+    'rad': 'Rad',                 // رادیان
+    'deg': 'Deg',                 // درجه
+    'shift': 'Shift'              // سوییچ عملکردهای ثانویه
 };
+
+
+const scientificKeys = [
+    'sin', 'cos', 'tan', 'asin', 'acos', 'atan', 
+    'ln', 'log', 'powerY', 'ePowerX', 'tenPowerX', 'customRoot', 
+    'pi', 'e', 'openParenthesis', 'closeParenthesis', 
+    'factorial', 'mod', 'exp'
+];
+
+const memoryKeys = ['mc', 'mr', 'mPlus', 'mMinus', 'ms'];
+
+const controlKeys = ['ans', 'rad', 'deg', 'shift'];
+
+const eraseKeys = ['c', 'ce', 'del'];
+
+const numberKeys = ['zero', 'one', 'two', 'three', 'four', 'five',
+    'six', 'seven', 'eight', 'nine', 'dot', 'sign'
+    ];
+
+const operatorKeys = [
+    'divider', 'multiplication', 'subtract', 'addition', 'equal', 
+    'percent', 'divideByOne', 'power', 'squareRoot',
+    'powerY', 'customRoot', 'mod' // اضافه شدن دکمه‌های جدید
+];
+
+let firstNumber = '';
+let secondNumber = '';
+let activeOperator = '';
+let resetInput = false;
+let angleMode = 'deg';
+let memoryValue = '0';
+let lastAnswer = '0';
 
 // Source - https://stackoverflow.com/a/38589039
 // Posted by Peter Rakmanyi, modified by community. See post 'Timeline' for change history
@@ -35,20 +105,11 @@ document.addEventListener('wheel', function(event){
     }
 });
 
-function handleButtonClick(button) {
-    const input = document.getElementById('result');
-    let currentText = input.value;
-    let lastValue = currentText.length - 1;
-    
-    currentText += currentText;
-    if (currentText === '0') {
-        currentText = '';
-    }
-    
-}
-
-
+// creating calss for buttons
 const container = document.querySelector('.buttons-container');
+const standardPanel = document.querySelector('.standard-panel');
+const scientificPanel = document.querySelector('.scientific-panel');
+const memoryPanel = document.querySelector('.memory-panel')
 const input = document.getElementById('result');
 
 Object.entries(buttons).forEach(([key, value]) => {
@@ -58,35 +119,309 @@ Object.entries(buttons).forEach(([key, value]) => {
     btn.className = 'btn';
     btn.classList.add(key);
 
-    if (!isNaN(value) || value === buttons.dot) {
-        btn.classList.add('number');
-    } else if (value === buttons.c || value === buttons.ce || value === buttons.del) {
-        btn.classList.add('erase');
+     if (memoryKeys.includes(key)) {
+        memoryPanel.appendChild(btn);
+     } else if (scientificKeys.includes(key) || controlKeys.includes(key)) {
+        scientificPanel.appendChild(btn);
     } else {
+        standardPanel.appendChild(btn);
+    }
+
+    if (numberKeys.includes(key)) {
+        btn.classList.add('number');
+    } else if (eraseKeys.includes(key)) {
+        btn.classList.add('erase');
+    } else if (scientificKeys.includes(key)) {
+        btn.classList.add('scientific');
+    } else if (controlKeys.includes(key)) {
+        btn.classList.add('control')
+    } else if (operatorKeys.includes(key)) {
         btn.classList.add('operator');
+    } else if (memoryKeys.includes(key)) {
+        btn.classList.add('memory')
+    } else {
+        console.warn(`WARN: button with the key "${key}" is NOT defined in any list`);
     }
 
     btn.addEventListener('click', () => {
-        if (btn.classList.contains('number')) {
-            if (currentText === '0') {
-                currentText = '';
-        }
-        currentText += value;
-        } else if (btn.classList.contains('operator')) {
-            // add condition that if there is already a operator available in 
-            // the field it replace that with the new one when a new operator is clicked on
-            if (btn.classList.contains('addition')) {
-                currentText += '+';
-            }
-            if (btn.classList.contains('subtract')) {
-                // if (currentText.contains(btn.classList.contains('operator'))) {
-                // currentText += '(-';
-                // } else {
-                    currentText += '-';
-                // }
-            }
-        }
-    });
+        handleButtonClick(key, value);
+    })
 
-    container.appendChild(btn);
 });
+
+function handleButtonClick(key, value) {
+    if (numberKeys.includes(key)) {
+        handleNumber(key, value);
+    } else if (eraseKeys.includes(key)) {
+        handleErase(key);
+    } else if (operatorKeys.includes(key)) {
+        handleOperator(key);
+    } else if (scientificKeys.includes(key)) {
+        handleScientific(key);
+    } else if (controlKeys.includes(key)) {
+        handleControl(key);
+    } else if (memoryKeys.includes(key)) {
+        handleMemory(key);
+    }
+}
+
+
+function handleNumber(key, value) {
+    if (resetInput) {
+        input.value = '';
+        resetInput = false;
+    }
+
+    if (key === 'sign') {
+        if (input.value !== '0' && input.value !== '') {
+            if (input.value.startsWith('-')) {
+                input.value = input.value.slice(1);
+            } else {
+                input.value = '-' + input.value;
+            }
+            return;
+        }
+    }
+
+    if (key === 'dot') {
+        if (input.value.includes('.')) {
+            return;
+        }
+    }
+
+    if (input.value === '0' && key !== 'dot') {
+        input.value = value;
+    } else {
+        input.value += value;
+    }
+}
+
+function handleErase(key) {
+    if (key === 'c') {
+        firstNumber = '';
+        secondNumber = '';
+        activeOperator = '';
+        resetInput = false;
+        input.value = '0';
+    } else if (key === 'ce') {
+        input.value = '0';
+    } else if (key === 'del') {
+        input.value = input.value.slice(0, -1);
+        if (input.value == '') {
+            input.value = '0';
+        }
+    }
+}
+
+function calculate(num1, op, num2) {
+    const n1 = parseFloat(num1);
+    const n2 = parseFloat(num2);
+
+    if (isNaN(n1) || isNaN(n2)) {
+        return '0';
+    }
+
+    switch (op) {
+        case 'addition':
+            return (n1 + n2).toString();
+        case 'subtract':
+            return (n1 - n2).toString();
+        case 'multiplication':
+            return (n1 * n2).toString();
+        case 'divider':
+            if (n2 !== 0) {
+                return (n1 / n2).toString();
+            } else {
+                return "Can't divide by zero";
+            }
+        case 'powerY':
+            return Math.pow(n1, n2).toString();
+        case 'customRoot':
+            return Math.pow(n1, (1 / n2)).toString();
+        case 'mod':
+            return (n1 % n2).toString();
+        default:
+            return num2;
+    }
+}
+
+function handleOperator(key) {
+    const currentValue = parseFloat(input.value);
+
+    if (['percent', 'divideByOne', 'power', 'squareRoot'].includes(key)) {
+        if(isNaN(currentValue)) {
+            return;
+        }
+
+        if (key === 'percent') {
+            input.value = (currentValue / 100).toString();
+        } else if (key === 'divideByOne') {
+            if (currentValue !== 0) {
+                input.value = (1 / currentValue).toString();
+            } else {
+                input.value = "Can't divide by zero";
+            }
+        } else if (key === 'power') {
+            // using currentValue ** currentValue was resulting in irrelevant numbers.
+            input.value = Math.pow(currentValue, 2).toString();
+        } else if (key === 'squareRoot') {
+            if (currentValue >= 0) {
+                input.value = Math.sqrt(currentValue).toString();
+            } else {
+                input.value = 'Error';
+            }
+        }
+
+        resetInput = true;
+    } else if (['addition', 'subtract', 'multiplication', 'divider', 'powerY', 'customRoot', 'mod'].includes(key)) {
+        if (firstNumber !== '' && activeOperator !== '' && !resetInput) {
+            secondNumber = input.value;
+            const result = calculate(firstNumber, activeOperator, secondNumber);
+            input.value = result;
+            firstNumber = result;
+        } else {
+            firstNumber = input.value;
+        }
+
+        activeOperator = key;
+        resetInput = true;
+    } else if (key === 'equal') {
+        if (firstNumber !== '' && activeOperator !== '') {
+            secondNumber = input.value;
+            const result = calculate(firstNumber, activeOperator, secondNumber);
+            input.value = result;
+
+            firstNumber = '';
+            activeOperator = '';
+            resetInput = true;
+        }
+    } else if (key === 'equal') {
+        if (firstNumber !== '' && activeOperator !== '') {
+            secondNumber = input.value;
+            const result = calculate(firstNumber, activeOperator, secondNumber);
+            input.value = result;
+            lastAnswer = result;
+
+            firstNumber = '';
+            activeOperator = '';
+            resetInput = true;
+        }
+    }
+}
+
+function handleScientific(key) {
+    const currentValue = parseFloat(input.value);
+
+    if (isNaN(currentValue)) {
+        return;
+    }
+
+    if (key === 'pi') {
+        input.value = Math.PI.toString();
+        resetInput = true;
+        return;
+    }
+    if (key === 'e') {
+        input.value = Math.E.toString();
+        resetInput = true;
+        return;
+    }
+
+    if (key === 'exp') {
+        if (input.value !== '0' && !input.value.includes('e')) {
+            input.value += 'e';
+        }
+        return;
+    }
+
+    let angle;
+    if (['sin', 'cos', 'tan'].includes(key)) {
+        if (angleMode === 'deg') {
+            angle = (currentValue * Math.PI) / 180;
+        } else {
+            angle = currentValue;
+        }
+
+        if (key === 'sin') {
+            input.value = Math.sin(angle).toString();
+        } else if (key === 'cos') {
+            input.value = Math.cos(angle).toString();
+        } else if (key === 'tan') {
+            if (angleMode === 'deg' && currentValue % 180 === 90) {
+                input.value = 'Error';
+            } else {
+                input.value = Math.tan(angle).toString();
+            }
+        }
+    } else if (['asin', 'acos', 'atan'].includes(key)) {
+        if ((key === 'asin' || key === 'acos') && (currentValue < -1 || currentValue > 1)) {
+            input.value = 'Error';
+            resetInput = true;
+            return;
+        }
+
+        let radResult = 0;
+        if (key === 'asin') {
+            radResult = Math.asin(currentValue);
+        } else if (key === 'acos') {
+            radResult = Math.acos(currentValue);
+        } else if (key === 'atan') {
+            radResult = Math.atan(currentValue);
+        }
+
+        if (angleMode === 'deg') {
+            const finalResult = (radResult * 180) / Math.PI;
+        } else {
+            finalResult = radResult;
+        }
+        input.value = finalResult.toString();
+    } else if (key === 'ln') {
+        if (currentValue > 0) {
+            input.value = Math.log(currentValue).toString();
+        } else {
+            input.value = 'Error';
+        }
+    } else if (key === 'log') {
+        if (currentValue > 0) {
+            input.value = Math.log10(currentValue).toString();
+        } else {
+            input.value = "Error";
+        }
+    } else if (key === 'ePowerX') {
+        input.value = Math.exp(currentValue).toString();
+    } else if (key === 'tenPowerX') {
+        input.value = Math.pow(10, currentValue).toString();
+    } else if (key === 'factorial') {
+        input.value = factorial(currentValue);
+    }
+
+    resetInput = true;
+}
+
+function handleMemory(key) {
+    const currentValue = parseFloat(input.value);
+
+    if (isNaN(currentValue)) {
+        return;
+    }
+
+    if (key === 'mc') {
+        memoryValue = '0';
+    } else if (key === 'mr') {
+        input.value = memoryValue.toString();
+        resetInput = true;
+    } else if (key === 'mplus') {
+        memoryValue += currentValue;
+        resetInput = true;
+    } else if (key === 'mMinus') {
+        memoryValue -= memoryValue;
+        resetInput = true;
+    } else if (key === 'ms') {
+        memoryValue = currentValue;
+        resetInput = true;
+    }
+}
+
+function handleControl(key) {
+    
+}
