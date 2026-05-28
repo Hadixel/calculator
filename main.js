@@ -42,8 +42,8 @@ const buttons = {
     'pi': '\u03C0',               // پی
     'e': 'e',                     // عدد نپر
     
-    'openParenthesis': '(',
-    'closeParenthesis': ')',
+    'openParentheses': '(',
+    'closeParentheses': ')',
     
     'factorial': 'n!',            // فاکتوریل
     'mod': 'Mod',                 // باقی‌مانده تقسیم
@@ -58,8 +58,7 @@ const buttons = {
     
     // Control & Modes
     'ans': 'Ans',                 // آخرین پاسخ محاسباتی
-    'rad': 'Rad',                 // رادیان
-    'deg': 'Deg',                 // درجه
+    'angleMode': 'Deg',
     'shift': 'Shift'              // سوییچ عملکردهای ثانویه
 };
 
@@ -67,13 +66,13 @@ const buttons = {
 const scientificKeys = [
     'sin', 'cos', 'tan', 'asin', 'acos', 'atan', 
     'ln', 'log', 'powerY', 'ePowerX', 'tenPowerX', 'customRoot', 
-    'pi', 'e', 'openParenthesis', 'closeParenthesis', 
+    'pi', 'e', 'openParentheses', 'closeParentheses', 
     'factorial', 'mod', 'exp'
 ];
 
 const memoryKeys = ['mc', 'mr', 'mPlus', 'mMinus', 'ms'];
 
-const controlKeys = ['ans', 'rad', 'deg', 'shift'];
+const controlKeys = ['ans', 'angleMode', 'shift'];
 
 const eraseKeys = ['c', 'ce', 'del'];
 
@@ -84,7 +83,7 @@ const numberKeys = ['zero', 'one', 'two', 'three', 'four', 'five',
 const operatorKeys = [
     'divider', 'multiplication', 'subtract', 'addition', 'equal', 
     'percent', 'divideByOne', 'power', 'squareRoot',
-    'powerY', 'customRoot', 'mod' // اضافه شدن دکمه‌های جدید
+    'powerY', 'customRoot', 'mod'
 ];
 
 let firstNumber = '';
@@ -94,6 +93,7 @@ let resetInput = false;
 let angleMode = 'deg';
 let memoryValue = '0';
 let lastAnswer = '0';
+let parenthesesStack = [];
 
 // Source - https://stackoverflow.com/a/38589039
 // Posted by Peter Rakmanyi, modified by community. See post 'Timeline' for change history
@@ -290,16 +290,6 @@ function handleOperator(key) {
             secondNumber = input.value;
             const result = calculate(firstNumber, activeOperator, secondNumber);
             input.value = result;
-
-            firstNumber = '';
-            activeOperator = '';
-            resetInput = true;
-        }
-    } else if (key === 'equal') {
-        if (firstNumber !== '' && activeOperator !== '') {
-            secondNumber = input.value;
-            const result = calculate(firstNumber, activeOperator, secondNumber);
-            input.value = result;
             lastAnswer = result;
 
             firstNumber = '';
@@ -312,10 +302,6 @@ function handleOperator(key) {
 function handleScientific(key) {
     const currentValue = parseFloat(input.value);
 
-    if (isNaN(currentValue)) {
-        return;
-    }
-
     if (key === 'pi') {
         input.value = Math.PI.toString();
         resetInput = true;
@@ -324,6 +310,40 @@ function handleScientific(key) {
     if (key === 'e') {
         input.value = Math.E.toString();
         resetInput = true;
+        return;
+    }
+
+    if (key === 'openParentheses') {
+        parenthesesStack.push({
+            firstNumber,
+            activeOperator
+        });
+
+        firstNumber = '';
+        activeOperator = '';
+        input.value = '0';
+        resetInput = true;
+        return;
+    }
+    if (key === 'closeParentheses') {
+        if (parenthesesStack.length > 0) {
+            let remainingResult = input.value;
+
+            if (firstNumber !== '' && activeOperator !== '') {
+                remainingResult = calculate(firstNumber, activeOperator, remainingResult);
+            }
+
+            const savedState = parenthesesStack.pop();
+            firstNumber = savedState.firstNumber;
+            activeOperator = savedState.activeOperator;
+
+            input.value = remainingResult;
+            resetInput = true;
+        }
+        return;
+    }
+
+    if (isNaN(currentValue)) {
         return;
     }
 
@@ -369,8 +389,9 @@ function handleScientific(key) {
             radResult = Math.atan(currentValue);
         }
 
+        let finalResult;
         if (angleMode === 'deg') {
-            const finalResult = (radResult * 180) / Math.PI;
+            finalResult = (radResult * 180) / Math.PI;
         } else {
             finalResult = radResult;
         }
@@ -423,5 +444,20 @@ function handleMemory(key) {
 }
 
 function handleControl(key) {
-    
+    if (key === 'angleMode') {
+        const angleBtn = document.querySelector('.angleMode');
+
+        if (angleMode === 'deg') {
+            angleMode = 'rad'
+            angleBtn.innerText = 'Rad';
+            console.log('radian mode');
+        } else {
+            angleMode = 'deg';
+            angleBtn.innerText = 'Deg';
+            console.log('Degree mode');
+        }
+    } else if (key === 'ans') {
+        input.value = lastAnswer;
+        resetInput = true;
+    }
 }
