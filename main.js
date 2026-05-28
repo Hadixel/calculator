@@ -4,7 +4,7 @@ const buttons = {
     'c': 'C',
     'del': 'DEL',
     'divideByOne': '1/x',
-    'power': 'x\u00B2', // x²
+    'power': 'x\u00B2', // x by the power of 2
     'squareRoot': '\u221Ax', // √x
     'divider': '÷',
     'nine': '9',
@@ -28,46 +28,42 @@ const buttons = {
     'sin': 'sin',
     'cos': 'cos',
     'tan': 'tan',
-    'asin': 'sin\u207B\u00B9',     // sin⁻¹
-    'acos': 'cos\u207B\u00B9',     // cos⁻¹
-    'atan': 'tan\u207B\u00B9',     // tan⁻¹
     
-    'ln': 'ln',                   // لگاریتم طبیعی
-    'log': 'log',                 // لگاریتم مبنای ۱۰
-    'powerY': 'x\u02B8',          // xʸ
+    'ln': 'ln',                   // log
+    'log': 'log',                 // log10
+    'powerY': 'x\u02B8',          // x by the power of Y
     'ePowerX': 'e\u02E3',         // eˣ
-    'tenPowerX': '10\u02E3',      // 10ˣ
-    'customRoot': '\u02B8\u221Ax', // ʸ√x
+    'tenPowerX': '10\u02E3',      // 10 by the power of X
+    'customRoot': '\u02B8\u221Ax', // radical x with the Y index
     
-    'pi': '\u03C0',               // پی
-    'e': 'e',                     // عدد نپر
+    'pi': '\u03C0',               // Pi
+    'e': 'e',                     // neper
     
     'openParentheses': '(',
     'closeParentheses': ')',
     
-    'factorial': 'n!',            // فاکتوریل
-    'mod': 'Mod',                 // باقی‌مانده تقسیم
-    'exp': 'Exp',                 // نماد علمی
+    'factorial': 'n!',
+    'mod': 'Mod',                 // division remainder
+    'exp': 'Exp',                 // نماد علمی (انگلیسیش یادم رفت)
     
     // Memory Buttons
-    'mc': 'MC',                   // پاک کردن حافظه
-    'mr': 'MR',                   // فراخوانی از حافظه
-    'mPlus': 'M+',                // افزودن به حافظه
-    'mMinus': 'M-',               // کاستن از حافظه
-    'ms': 'MS',                   // ذخیره در حافظه
+    'mc': 'MC',                   // clear memory
+    'mr': 'MR',                   // read from memory
+    'mPlus': 'M+',                // add to memory
+    'mMinus': 'M-',               // remove from memory
+    'ms': 'MS',                   // save in memory
     
     // Control & Modes
-    'ans': 'Ans',                 // آخرین پاسخ محاسباتی
+    'ans': 'Ans',                 // latest result
     'angleMode': 'Deg',
-    'shift': 'Shift'              // سوییچ عملکردهای ثانویه
+    'shift': 'Shift'              // switch to secondery operator
 };
 
 
 const scientificKeys = [
-    'sin', 'cos', 'tan', 'asin', 'acos', 'atan', 
-    'ln', 'log', 'powerY', 'ePowerX', 'tenPowerX', 'customRoot', 
-    'pi', 'e', 'openParentheses', 'closeParentheses', 
-    'factorial', 'mod', 'exp'
+    'sin', 'cos', 'tan', 'ln', 'log', 'powerY', 'ePowerX',
+    'tenPowerX', 'customRoot', 'pi', 'e', 'openParentheses',
+    'closeParentheses', 'factorial', 'mod', 'exp'
 ];
 
 const memoryKeys = ['mc', 'mr', 'mPlus', 'mMinus', 'ms'];
@@ -91,9 +87,10 @@ let secondNumber = '';
 let activeOperator = '';
 let resetInput = false;
 let angleMode = 'deg';
-let memoryValue = '0';
+let memoryValue = 0;
 let lastAnswer = '0';
 let parenthesesStack = [];
+let isShiftActive = false;
 
 // Source - https://stackoverflow.com/a/38589039
 // Posted by Peter Rakmanyi, modified by community. See post 'Timeline' for change history
@@ -362,30 +359,42 @@ function handleScientific(key) {
             angle = currentValue;
         }
 
-        if (key === 'sin') {
+        let finalOperation = key;
+        if (isShiftActive) {
+            if (key === 'sin') {
+                finalOperation = 'asin'
+            } else if (key === 'cos') {
+                finalOperation = 'acos';
+            } else if (key === 'tan') {
+                finalOperation = 'atan';
+            }
+        }
+
+        if (finalOperation === 'sin') {
             input.value = Math.sin(angle).toString();
-        } else if (key === 'cos') {
+        } else if (finalOperation === 'cos') {
             input.value = Math.cos(angle).toString();
-        } else if (key === 'tan') {
+        } else if (finalOperation === 'tan') {
             if (angleMode === 'deg' && currentValue % 180 === 90) {
                 input.value = 'Error';
             } else {
                 input.value = Math.tan(angle).toString();
             }
         }
-    } else if (['asin', 'acos', 'atan'].includes(key)) {
+    } else if (['asin', 'acos', 'atan'].includes(finalOperation)) {
         if ((key === 'asin' || key === 'acos') && (currentValue < -1 || currentValue > 1)) {
             input.value = 'Error';
             resetInput = true;
+            toggleShift(false);
             return;
         }
 
         let radResult = 0;
-        if (key === 'asin') {
+        if (finalOperation === 'asin') {
             radResult = Math.asin(currentValue);
-        } else if (key === 'acos') {
+        } else if (finalOperation === 'acos') {
             radResult = Math.acos(currentValue);
-        } else if (key === 'atan') {
+        } else if (finalOperation === 'atan') {
             radResult = Math.atan(currentValue);
         }
 
@@ -396,7 +405,13 @@ function handleScientific(key) {
             finalResult = radResult;
         }
         input.value = finalResult.toString();
-    } else if (key === 'ln') {
+    }
+    
+    if (isShiftActive) {
+        toggleShift(false);
+    }
+
+    else if (key === 'ln') {
         if (currentValue > 0) {
             input.value = Math.log(currentValue).toString();
         } else {
@@ -427,15 +442,15 @@ function handleMemory(key) {
     }
 
     if (key === 'mc') {
-        memoryValue = '0';
+        memoryValue = 0;
     } else if (key === 'mr') {
         input.value = memoryValue.toString();
         resetInput = true;
-    } else if (key === 'mplus') {
+    } else if (key === 'mPlus') {
         memoryValue += currentValue;
         resetInput = true;
     } else if (key === 'mMinus') {
-        memoryValue -= memoryValue;
+        memoryValue -= currentValue;
         resetInput = true;
     } else if (key === 'ms') {
         memoryValue = currentValue;
@@ -459,5 +474,44 @@ function handleControl(key) {
     } else if (key === 'ans') {
         input.value = lastAnswer;
         resetInput = true;
+    } else if (key === 'shift') {
+        toggleShift(!isShiftActive);
+    }
+}
+
+function factorial(n) {
+    if (n < 0 || !Number.isInteger(n)){
+        return 'Error';
+    }
+    if (n === 0 || n === 1){
+        return '1';
+    }
+    let result = 1;
+    for (let i = 2; i <= n; i++) {
+        result *= i;
+    }
+    return result.toString();
+}
+
+function toggleShift(state) {
+    isShiftActive = state;
+
+    const shiftBtn = document.querySelector('.shift');
+    const sinBtn = document.querySelector('.sin');
+    const cosBtn = document.querySelector('.cos');
+    const tanBtn = document.querySelector('.tan');
+
+    if (isShiftActive) {
+        shiftBtn.classList.add('active-shift');
+
+        sinBtn.innerText('sin\u207B\u00B9');
+        cosBtn.innerText('cos\u207B\u00B9');
+        tanBtn.innerText('tan\u207B\u00B9');
+    } else {
+        shiftBtn.classList.remove('active-shift');
+
+        sinBtn.innerText('sin');
+        cosBtn.innerText('cos');
+        tanBtn.innerText('tan');
     }
 }
