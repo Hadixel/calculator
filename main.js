@@ -288,7 +288,7 @@ function handleOperator(key) {
         activeOperator = key;
         resetInput = true;
 
-        const opSymbol = buttons[activeOperator];
+        const opSymbol = getOperatorSymbol(activeOperator);
             expressionDiv.innerText = `${firstNumber} ${opSymbol}`;
 
     } else if (key === 'equal') {
@@ -296,7 +296,7 @@ function handleOperator(key) {
             secondNumber = input.value;
             const result = calculate(firstNumber, activeOperator, secondNumber);
 
-            const opSymbol = buttons[activeOperator];
+            const opSymbol = getOperatorSymbol(activeOperator);
             expressionDiv.innerText = `${firstNumber} ${opSymbol} ${secondNumber} =`;
 
             input.value = result;
@@ -532,4 +532,14 @@ function toggleShift(state) {
         cosBtn.innerText = 'cos';
         tanBtn.innerText = 'tan';
     }
+}
+
+function getOperatorSymbol(opKey) {
+    if (opKey === 'powerY') {
+        return '^';
+    }
+    if (opKey === 'customRoot') {
+        return 'yroot';
+    }
+    return buttons[opKey] || '';
 }
