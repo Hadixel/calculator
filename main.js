@@ -92,6 +92,14 @@ let lastAnswer = '0';
 let parenthesesStack = [];
 let isShiftActive = false;
 
+// assigning Elements
+const container = document.querySelector('.buttons-container');
+const standardPanel = document.querySelector('.standard-panel');
+const scientificPanel = document.querySelector('.scientific-panel');
+const memoryPanel = document.querySelector('.memory-panel')
+const input = document.getElementById('result');
+const expressionDiv = document.getElementById('expression');
+
 // Source - https://stackoverflow.com/a/38589039
 // Posted by Peter Rakmanyi, modified by community. See post 'Timeline' for change history
 // Retrieved 2026-05-21, License - CC BY-SA 4.0
@@ -102,12 +110,6 @@ document.addEventListener('wheel', function(event){
     }
 });
 
-// creating calss for buttons
-const container = document.querySelector('.buttons-container');
-const standardPanel = document.querySelector('.standard-panel');
-const scientificPanel = document.querySelector('.scientific-panel');
-const memoryPanel = document.querySelector('.memory-panel')
-const input = document.getElementById('result');
 
 Object.entries(buttons).forEach(([key, value]) => {
     const btn = document.createElement('button')
@@ -186,8 +188,10 @@ function handleNumber(key, value) {
         }
     }
 
-    if (input.value === '0' && key !== 'dot') {
+    if (input.value === '0' && key !== 'dot' && key !== 'sign') {
         input.value = value;
+    } else if (key === 'sign') {
+        input.value = '-';
     } else {
         input.value += value;
     }
@@ -200,6 +204,7 @@ function handleErase(key) {
         activeOperator = '';
         resetInput = false;
         input.value = '0';
+        expressionDiv.innerText = '';
     } else if (key === 'ce') {
         input.value = '0';
     } else if (key === 'del') {
@@ -282,10 +287,18 @@ function handleOperator(key) {
 
         activeOperator = key;
         resetInput = true;
+
+        const opSymbol = buttons[activeOperator];
+            expressionDiv.innerText = `${firstNumber} ${opSymbol}`;
+
     } else if (key === 'equal') {
         if (firstNumber !== '' && activeOperator !== '') {
             secondNumber = input.value;
             const result = calculate(firstNumber, activeOperator, secondNumber);
+
+            const opSymbol = buttons[activeOperator];
+            expressionDiv.innerText = `${firstNumber} ${opSymbol} ${secondNumber} =`;
+
             input.value = result;
             lastAnswer = result;
 
@@ -351,23 +364,23 @@ function handleScientific(key) {
         return;
     }
 
+    let finalOperation = key;
+    if (isShiftActive && ['sin', 'cos', 'tan'].includes(key)) {
+        if (key === 'sin') {
+            finalOperation = 'asin'
+        } else if (key === 'cos') {
+            finalOperation = 'acos';
+        } else if (key === 'tan') {
+            finalOperation = 'atan';
+        }
+    }
+
     let angle;
     if (['sin', 'cos', 'tan'].includes(key)) {
         if (angleMode === 'deg') {
             angle = (currentValue * Math.PI) / 180;
         } else {
             angle = currentValue;
-        }
-
-        let finalOperation = key;
-        if (isShiftActive) {
-            if (key === 'sin') {
-                finalOperation = 'asin'
-            } else if (key === 'cos') {
-                finalOperation = 'acos';
-            } else if (key === 'tan') {
-                finalOperation = 'atan';
-            }
         }
 
         if (finalOperation === 'sin') {
@@ -381,6 +394,11 @@ function handleScientific(key) {
                 input.value = Math.tan(angle).toString();
             }
         }
+
+        if (isShiftActive) {
+            toggleShift(false)
+        }
+
     } else if (['asin', 'acos', 'atan'].includes(finalOperation)) {
         if ((key === 'asin' || key === 'acos') && (currentValue < -1 || currentValue > 1)) {
             input.value = 'Error';
@@ -504,14 +522,14 @@ function toggleShift(state) {
     if (isShiftActive) {
         shiftBtn.classList.add('active-shift');
 
-        sinBtn.innerText('sin\u207B\u00B9');
-        cosBtn.innerText('cos\u207B\u00B9');
-        tanBtn.innerText('tan\u207B\u00B9');
+        sinBtn.innerText = 'sin\u207B\u00B9';
+        cosBtn.innerText = 'cos\u207B\u00B9';
+        tanBtn.innerText = 'tan\u207B\u00B9';
     } else {
         shiftBtn.classList.remove('active-shift');
 
-        sinBtn.innerText('sin');
-        cosBtn.innerText('cos');
-        tanBtn.innerText('tan');
+        sinBtn.innerText = 'sin';
+        cosBtn.innerText = 'cos';
+        tanBtn.innerText = 'tan';
     }
 }
