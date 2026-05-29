@@ -5,7 +5,7 @@ const buttons = {
     'del': 'DEL',
     'divideByOne': '1/x',
     'power': 'x\u00B2', // x by the power of 2
-    'squareRoot': '\u221Ax', // √x
+    'squareRoot': '\u221Ax', // radical x
     'divider': '÷',
     'nine': '9',
     'eight': '8',
@@ -169,6 +169,10 @@ function handleNumber(key, value) {
     if (resetInput) {
         input.value = '';
         resetInput = false;
+
+        if (expressionDiv.innerText.includes('=')) {
+            expressionDiv.innerText = '';
+        }
     }
 
     if (key === 'sign') {
@@ -276,7 +280,7 @@ function handleOperator(key) {
 
         resetInput = true;
     } else if (['addition', 'subtract', 'multiplication', 'divider', 'powerY', 'customRoot', 'mod'].includes(key)) {
-        if (firstNumber !== '' && activeOperator !== '' && !resetInput) {
+        if (firstNumber !== '' && activeOperator !== '' && (!resetInput || expressionDiv.innerText.trim().endsWith(')'))) {
             secondNumber = input.value;
             const result = calculate(firstNumber, activeOperator, secondNumber);
             input.value = result;
@@ -289,15 +293,36 @@ function handleOperator(key) {
         resetInput = true;
 
         const opSymbol = getOperatorSymbol(activeOperator);
+
+       if (expressionDiv.innerText === '' || expressionDiv.innerText.includes('=')) {
             expressionDiv.innerText = `${firstNumber} ${opSymbol}`;
+        } else {
+            const words = expressionDiv.innerText.trim().split(' ');
+            const lastWord = words[words.length - 1];
+            const activeSymbols = ['+', '−', '×', '÷', '^', 'yroot', 'Mod'];
+
+            if (activeSymbols.includes(lastWord)) {
+                words[words.length - 1] = opSymbol;
+                expressionDiv.innerText = words.join(' ');
+            } else {
+                if (expressionDiv.innerText.trim().endsWith(')')) {
+                    expressionDiv.innerText += ` ${opSymbol}`;
+                } else {
+                    expressionDiv.innerText += ` ${input.value} ${opSymbol}`;
+                }
+            }
+        }
 
     } else if (key === 'equal') {
         if (firstNumber !== '' && activeOperator !== '') {
             secondNumber = input.value;
             const result = calculate(firstNumber, activeOperator, secondNumber);
 
-            const opSymbol = getOperatorSymbol(activeOperator);
-            expressionDiv.innerText = `${firstNumber} ${opSymbol} ${secondNumber} =`;
+            if (expressionDiv.innerText.trim().endsWith(')')) {
+                expressionDiv.innerText += ' =';
+            } else {
+                expressionDiv.innerText += ` ${secondNumber} =`;
+            }
 
             input.value = result;
             lastAnswer = result;
@@ -329,6 +354,12 @@ function handleScientific(key) {
             activeOperator
         });
 
+         if (expressionDiv.innerText === '' || expressionDiv.innerText.includes('=')) {
+            expressionDiv.innerText = '(';
+        } else {
+            expressionDiv.innerText += ' (';
+        }
+
         firstNumber = '';
         activeOperator = '';
         input.value = '0';
@@ -338,6 +369,12 @@ function handleScientific(key) {
     if (key === 'closeParentheses') {
         if (parenthesesStack.length > 0) {
             let remainingResult = input.value;
+
+            if (expressionDiv.innerText.trim().endsWith('(')) {
+                expressionDiv.innerText += `${remainingResult} )`;
+            } else {
+                expressionDiv.innerText += ` ${remainingResult} )`;
+            }
 
             if (firstNumber !== '' && activeOperator !== '') {
                 remainingResult = calculate(firstNumber, activeOperator, remainingResult);
@@ -376,7 +413,7 @@ function handleScientific(key) {
     }
 
     let angle;
-    if (['sin', 'cos', 'tan'].includes(key)) {
+    if (['sin', 'cos', 'tan'].includes(finalOperation)) {
         if (angleMode === 'deg') {
             angle = (currentValue * Math.PI) / 180;
         } else {
