@@ -118,9 +118,9 @@ Object.entries(buttons).forEach(([key, value]) => {
     btn.className = 'btn';
     btn.classList.add(key);
 
-     if (memoryKeys.includes(key)) {
+    if (memoryKeys.includes(key)) {
         memoryPanel.appendChild(btn);
-     } else if (scientificKeys.includes(key) || controlKeys.includes(key)) {
+    } else if (scientificKeys.includes(key) || controlKeys.includes(key)) {
         scientificPanel.appendChild(btn);
     } else {
         standardPanel.appendChild(btn);
@@ -330,6 +330,13 @@ function handleOperator(key) {
             firstNumber = '';
             activeOperator = '';
             resetInput = true;
+        } else {
+            const parsedValue = parseFloat(input.value);
+            if (!isNaN(parsedValue)) {
+                input.value = parsedValue.toString();
+                lastAnswer = input.value;
+                resetInput = true;
+            }
         }
     }
 }

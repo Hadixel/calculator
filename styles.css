@@ -141,7 +141,7 @@ input[type=number] {
 @media only screen and (min-width: 768px) {
 
     .calc-title::after {
-    content: "Scientific";
+        content: "Scientific";
     }
 
     .buttons-container {
@@ -168,7 +168,7 @@ input[type=number] {
         display: grid;
         grid-area: scientific;
         grid-template-columns: repeat(4, 1fr);
-        grid-auto-rows: max-content;
+        grid-template-rows: repeat(6, 1fr);
         gap: 1rem;
     }
 
@@ -176,7 +176,12 @@ input[type=number] {
         display: grid;
         grid-area: standard;
         grid-template-columns: repeat(4, 1fr);
+        grid-template-rows: repeat(6, 1fr);
         gap: 1rem;
+    }
+    
+    .ans {
+        grid-column-start: 2;
     }
 }
 
